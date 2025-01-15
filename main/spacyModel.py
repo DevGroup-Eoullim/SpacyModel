@@ -19,34 +19,42 @@ def load_spacy_model():
         print(f"spaCy 모델 로드 실패: {e}")
         sys.exit(1)
 
-def create_database():
+def initialize_database():
     """
-    데이터베이스와 테이블을 생성합니다.
+    데이터베이스가 존재하지 않으면 생성하고, 존재하면 초기화합니다.
     """
     connection = sqlite3.connect("database.db")
     cursor = connection.cursor()
-    
+
     # texts 테이블 생성
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS texts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            content TEXT NOT NULL
+            textid INTEGER PRIMARY KEY, -- AUTOINCREMENT 제거
+            text TEXT NOT NULL
         )
     """)
-    
+
     # parts 테이블 생성
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS parts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            text_id INTEGER NOT NULL,
-            token TEXT NOT NULL,
-            pos TEXT NOT NULL,
-            dep TEXT NOT NULL,
-            FOREIGN KEY (text_id) REFERENCES texts (id)
+            textid INTEGER NOT NULL,
+            tokenid INTEGER,
+            start INTEGER NOT NULL,
+            end INTEGER,
+            tag TEXT,
+            pos TEXT,
+            morph TEXT,
+            lemma TEXT,
+            dep TEXT,
+            head INTEGER,
+            PRIMARY KEY (textid, tokenid),
+            FOREIGN KEY (textid) REFERENCES texts (textid)
         )
     """)
+
     connection.commit()
     connection.close()
+
 
 def save_to_database(input_text, results):
     """
@@ -54,18 +62,29 @@ def save_to_database(input_text, results):
     """
     connection = sqlite3.connect("database.db")
     cursor = connection.cursor()
-    
+
     # texts 테이블에 문장 삽입
-    cursor.execute("INSERT INTO texts (content) VALUES (?)", (input_text,))
+    cursor.execute("INSERT INTO texts (text) VALUES (?)", (input_text,))
     text_id = cursor.lastrowid  # 삽입된 문장의 ID 가져오기
-    
+
     # parts 테이블에 단어 분석 결과 삽입
     for token_data in results:
         cursor.execute("""
-            INSERT INTO parts (text_id, token, pos, dep)
-            VALUES (?, ?, ?, ?)
-        """, (text_id, token_data["token"], token_data["pos"], token_data["dep"]))
-    
+            INSERT INTO parts (textid, tokenid, start, end, tag, pos, morph, lemma, dep, head)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            text_id,
+            token_data["tokenid"],
+            token_data["start"],
+            token_data["end"],
+            token_data["tag"],
+            token_data["pos"],
+            token_data["morph"],
+            token_data["lemma"],
+            token_data["dep"],
+            token_data["head"]
+        ))
+
     connection.commit()
     connection.close()
 
@@ -79,9 +98,15 @@ def analyze_sentence(text):
     results = []
     for token in doc:
         results.append({
-            "token": token.text,
+            "tokenid": token.i,
+            "start": token.idx,
+            "end": token.idx + len(token),
+            "tag": token.tag_,
             "pos": token.pos_,
-            "dep": token.dep_
+            "morph": str(token.morph) if token.morph else "",
+            "lemma": token.lemma_,
+            "dep": token.dep_,
+            "head": token.head.i
         })
     return results
 
@@ -93,13 +118,13 @@ if __name__ == "__main__":
     input_text = sys.argv[1]
 
     # 데이터베이스 초기화
-    create_database()
+    initialize_database()
 
     try:
         # 문장 분석 및 결과 출력
         analysis_results = analyze_sentence(input_text)
         for result in analysis_results:
-            print(f"{result['token']}: {result['pos']}, {result['dep']}")
+            print(f"Token ID {result['tokenid']}: {result['lemma']} -> {result['pos']}, {result['dep']}")
 
         # 데이터베이스에 저장
         save_to_database(input_text, analysis_results)

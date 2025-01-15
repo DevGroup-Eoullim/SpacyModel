@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['spacy\\spacyModel.py'],
+    ['main\\spacyModel.py'],
     pathex=[],
     binaries=[],
-    datas=[('C:\\Users\\imgae\\AppData\\Local\\Temp\\_MEI86242\\en_core_web_sm\\en_core_web_sm-3.8.0', 'en_core_web_sm')],
+    datas=[('C:\\\\Users\\\\imgae\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\Lib\\\\site-packages\\\\en_core_web_sm\\\\en_core_web_sm-3.8.0', 'en_core_web_sm')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
