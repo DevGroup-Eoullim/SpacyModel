@@ -124,7 +124,7 @@ if __name__ == "__main__":
         # 문장 분석 및 결과 출력
         analysis_results = analyze_sentence(input_text)
         for result in analysis_results:
-            print(f"Token ID {result['tokenid']}: {result['lemma']} -> {result['pos']}, {result['dep']}")
+            print(f"Token ID {result['tokenid']}")
 
         # 데이터베이스에 저장
         save_to_database(input_text, analysis_results)
