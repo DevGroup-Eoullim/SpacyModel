@@ -124,10 +124,9 @@ if __name__ == "__main__":
         # 문장 분석 및 결과 출력
         analysis_results = analyze_sentence(input_text)
         for result in analysis_results:
-            print(f"Token ID {result['tokenid']}")
+            print(f"{result['tokenid']}")
 
         # 데이터베이스에 저장
         save_to_database(input_text, analysis_results)
-        print("분석 결과가 데이터베이스에 저장되었습니다.")
     except Exception as e:
-        print(f"오류 발생: {e}")
+        print("-1")
