@@ -123,10 +123,18 @@ if __name__ == "__main__":
     try:
         # 문장 분석 및 결과 출력
         analysis_results = analyze_sentence(input_text)
-        for result in analysis_results:
-            print(f"{result['tokenid']}")
 
         # 데이터베이스에 저장
         save_to_database(input_text, analysis_results)
+
+        # 삽입된 textid 출력
+        connection = sqlite3.connect("database.db")
+        cursor = connection.cursor()
+        cursor.execute("SELECT MAX(textid) FROM texts")
+        text_id = cursor.fetchone()[0]
+        connection.close()
+
+        print(f"{text_id}")
+
     except Exception as e:
         print("-1")
