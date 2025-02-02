@@ -29,18 +29,19 @@ def initialize_database():
     # texts 테이블 생성
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS texts (
-            textid INTEGER PRIMARY KEY, -- AUTOINCREMENT 제거
+            textid INTEGER PRIMARY KEY, 
             text TEXT NOT NULL
         )
     """)
 
-    # parts 테이블 생성
+    # parts 테이블 생성 (token 컬럼 추가)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS parts (
             textid INTEGER NOT NULL,
             tokenid INTEGER,
             start INTEGER NOT NULL,
             end INTEGER,
+            token TEXT,  -- 원본 토큰 저장
             tag TEXT,
             pos TEXT,
             morph TEXT,
@@ -54,7 +55,6 @@ def initialize_database():
 
     connection.commit()
     connection.close()
-
 
 def save_to_database(input_text, results):
     """
@@ -70,13 +70,14 @@ def save_to_database(input_text, results):
     # parts 테이블에 단어 분석 결과 삽입
     for token_data in results:
         cursor.execute("""
-            INSERT INTO parts (textid, tokenid, start, end, tag, pos, morph, lemma, dep, head)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO parts (textid, tokenid, start, end, token, tag, pos, morph, lemma, dep, head)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             text_id,
             token_data["tokenid"],
             token_data["start"],
             token_data["end"],
+            token_data["token"],  # 원본 토큰
             token_data["tag"],
             token_data["pos"],
             token_data["morph"],
@@ -101,6 +102,7 @@ def analyze_sentence(text):
             "tokenid": token.i,
             "start": token.idx,
             "end": token.idx + len(token),
+            "token": token.text,  # 원본 단어 추가
             "tag": token.tag_,
             "pos": token.pos_,
             "morph": str(token.morph) if token.morph else "",
